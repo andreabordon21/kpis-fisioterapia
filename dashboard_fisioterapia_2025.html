@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard Fisioterapia Ocupacional 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f766e, #0d9488);
+      color: #fff;
+      padding: 20px 30px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    nav {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    nav a {
+      color: #e0f2f1;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    nav a.active {
+      border-bottom: 2px solid #fff;
+    }
+
+    .container {
+      padding: 25px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .kpi {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    .kpi i {
+      font-size: 22px;
+      color: #0d9488;
+    }
+
+    .kpi h3 {
+      margin: 10px 0 5px;
+      font-size: 22px;
+    }
+
+    .kpi p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    .card h4 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f0fdfa;
+      text-align: left;
+    }
+
+    .upload-box {
+      border: 2px dashed #0d9488;
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      background: #ecfeff;
+    }
+
+    .upload-box input {
+      margin-top: 15px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-chart-line"></i> Dashboard Fisioterapia Ocupacional — 2025</h1>
+  <nav>
+    <a class="active" onclick="showPage('dashboard')">Dashboard</a>
+    <a onclick="showPage('funcionarios')">Funcionários</a>
+    <a onclick="showPage('analise')">Análise Detalhada</a>
+    <a onclick="showPage('upload')">Upload Excel</a>
+  </nav>
+</header>
+
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="page active">
+    <div class="kpis">
+      <div class="kpi"><i class="fa-solid fa-users"></i><h3 id="kpiFuncionarios">457</h3><p>Total de Funcionários</p></div>
+      <div class="kpi"><i class="fa-solid fa-calendar-check"></i><h3 id="kpiAtendidos">0</h3><p>Pacientes Únicos Atendidos</p></div>
+      <div class="kpi"><i class="fa-solid fa-percent"></i><h3 id="kpiComparecimento">0%</h3><p>Taxa de Comparecimento</p></div>
+      <div class="kpi"><i class="fa-solid fa-clock"></i><h3 id="kpiOcupacao">0%</h3><p>Ocupação Efetiva</p></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h4>Atendimentos por Mês (sem duplicação)</h4><canvas id="chartMes"></canvas></div>
+      <div class="card"><h4>Queixas por Segmento Corporal</h4><canvas id="chartSegmento"></canvas></div>
+      <div class="card"><h4>Comparecimento x Falta</h4><canvas id="chartFalta"></canvas></div>
+      <div class="card"><h4>Risco Ergonômico</h4><canvas id="chartRisco"></canvas></div>
+    </div>
+  </div>
+
+  <!-- FUNCIONARIOS -->
+  <div id="funcionarios" class="page">
+    <div class="card">
+      <h4>Cadastro de Funcionários (Sheet: dados)</h4>
+      <table id="tabelaFuncionarios"></table>
+    </div>
+  </div>
+
+  <!-- ANALISE -->
+  <div id="analise" class="page">
+    <div class="grid">
+      <div class="card"><h4>Distribuição por Setor</h4><canvas id="chartSetor"></canvas></div>
+      <div class="card"><h4>Escala EVA</h4><canvas id="chartEva"></canvas></div>
+      <div class="card"><h4>Relação com Posto de Trabalho</h4><canvas id="chartPosto"></canvas></div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload" class="page">
+    <div class="upload-box">
+      <h3><i class="fa-solid fa-file-excel"></i> Upload da Planilha Excel</h3>
+      <p>Sheets esperadas: <b>dados fisioterapia</b> e <b>dados</b></p>
+      <input type="file" id="excelFile" accept=".xlsx" />
+      <br/><br/>
+      <button onclick="fazerLeitura()" style="padding:10px 20px;border:none;border-radius:8px;background:#0d9488;color:#fff;font-size:14px;cursor:pointer;">
+        <i class="fa-solid fa-play"></i> Fazer leitura da planilha
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Dashboard Profissional de Fisioterapia Ocupacional • KPIs automáticos • 2025
+</footer>
+
+<script>
+let charts = [];
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+let arquivoExcel = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('excelFile').addEventListener('change', e => {
+    arquivoExcel = e.target.files[0];
+  });
+});
+
+function fazerLeitura() {
+  if (!arquivoExcel) {
+    alert('Selecione um arquivo Excel antes de fazer a leitura.');
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = async e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      const sheetNames = workbook.SheetNames.map(s => s.toLowerCase());
+
+      // localizar abas exatamente como informado
+      const fisioName = workbook.SheetNames.find(s => s.toLowerCase() === 'dados');
+      const cadastroName = workbook.SheetNames.find(s => s.toLowerCase().includes('cadastro'));
+
+      if (!fisioName || !cadastroName) {
+        alert('Não foi possível localizar as abas "Dados" e "cadastro fisio".');
+        return;
+      }
+
+      const fisioRaw = XLSX.utils.sheet_to_json(workbook.Sheets[fisioName], { defval: '', raw: false });
+      const cadastroRaw = XLSX.utils.sheet_to_json(workbook.Sheets[cadastroName], { defval: '', raw: false });
+
+      // normalização de colunas
+      const fisio = fisioRaw.map(l => ({
+        data: l['Data'],
+        ano: l['ANO'],
+        mes: l['MÊS'],
+        horario: l['Horário'],
+        profissional: l['Nome do Profissional'],
+        re: l['RE'],
+        paciente: l['Nome do Paciente'],
+        setor: l['Setor de Trabalho'],
+        motivo: l['Motivo'],
+        atendimento: l['Atendimento'],
+        motivoFalta: l['Motivo da Falta'],
+        entradaFisio: l['Entrada na Fisioterapia'],
+        queixaPrincipal: l['Queixa Principal'],
+        queixaSecundaria: l['Queixa Secundária'],
+        relacaoPosto: l['Relação com o Postos de Trabalho?'],
+        riscoErgonomico: l['Risco Ergonômico do Posto de Trabalho'],
+        atividadeFisica: l['Faz Atividades Físicas?'],
+        medicacao: l['Toma Medicação para Dor?'],
+        doencaCronica: l['Possui doenças crônicas?'],
+        afastamento: l['Teve afastamento do trabalho devido ao quadro álgico?'],
+        cirurgia: l['Teve cirurgia?'],
+        prognostico: l['Prognóstico (Q1,Q2,Q3)'],
+        outroTratamento: l['Está fazendo outro tratamento?'],
+        fasePrograma: l['Fase do Programa de Fisioterapia'],
+        qtdProgramado: l['Qdd de Atendimentos Programado'],
+        conduta: l['Conduta'],
+        caseSucesso: l['Case de Sucesso'],
+        qtdRealizado: l['Qdd de Atendimentos Realizados até o momento'],
+        eva: l['EVA'],
+        alta: l['Alta']
+      }));
+
+      const funcionarios = cadastroRaw;
+
+      if (!fisio.length) {
+        alert('A aba de fisioterapia está vazia.');
+        return;
+      }
+
+      gerarKPIs(fisio);
+      gerarGraficos(fisio);
+      montarTabela(funcionarios);
+
+      alert('Leitura online concluída com sucesso!');
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar o arquivo Excel.');
+    }
+  };
+
+  reader.readAsArrayBuffer(arquivoExcel);
+}
+
+function gerarKPIs(dados) {
+  const nomesUnicos = new Set(dados.map(d => d.NOME));
+  document.getElementById('kpiAtendidos').innerText = nomesUnicos.size;
+
+  const compareceu = dados.filter(d => String(d.COMPARECIMENTO).toLowerCase() === 'sim').length;
+  const taxa = (compareceu / dados.length * 100).toFixed(1);
+  document.getElementById('kpiComparecimento').innerText = taxa + '%';
+
+  document.getElementById('kpiOcupacao').innerText = taxa + '%';
+}
+
+function gerarGraficos(dados) {
+  charts.forEach(c => c.destroy()); charts = [];
+
+  const porMes = {};
+  dados.forEach(d => {
+    const mes = d.MÊS || d.MES;
+    porMes[mes] = porMes[mes] || new Set();
+    porMes[mes].add(d.NOME);
+  });
+
+  charts.push(new Chart(chartMes, {
+    type: 'line',
+    data: { labels: Object.keys(porMes), datasets: [{ label: 'Atendidos', data: Object.values(porMes).map(s => s.size) }] }
+  }));
+
+  const segmentos = contar(dados, 'SEGMENTO');
+  charts.push(new Chart(chartSegmento, { type: 'doughnut', data: montarData(segmentos) }));
+
+  const faltas = contar(dados, 'COMPARECIMENTO');
+  charts.push(new Chart(chartFalta, { type: 'bar', data: montarData(faltas) }));
+
+  const risco = contar(dados, 'RISCO ERGONÔMICO');
+  charts.push(new Chart(chartRisco, { type: 'pie', data: montarData(risco) }));
+
+  charts.push(new Chart(chartSetor, { type: 'bar', data: montarData(contar(dados, 'SETOR')) }));
+  charts.push(new Chart(chartEva, { type: 'bar', data: montarData(contar(dados, 'EVA')) }));
+  charts.push(new Chart(chartPosto, { type: 'pie', data: montarData(contar(dados, 'POSTO DE TRABALHO')) }));
+}
+
+function contar(dados, campo) {
+  const r = {};
+  dados.forEach(d => { if(d[campo]) r[d[campo]] = (r[d[campo]] || 0) + 1; });
+  return r;
+}
+
+function montarData(obj) {
+  return { labels: Object.keys(obj), datasets: [{ data: Object.values(obj) }] };
+}
+
+function montarTabela(dados) {
+  const tabela = document.getElementById('tabelaFuncionarios');
+  tabela.innerHTML = '';
+  if (!dados.length) return;
+
+  const thead = '<tr>' + Object.keys(dados[0]).map(c => `<th>${c}</th>`).join('') + '</tr>';
+  const tbody = dados.map(l => '<tr>' + Object.values(l).map(v => `<td>${v}</td>`).join('') + '</tr>').join('');
+  tabela.innerHTML = thead + tbody;
+}
+</script>
+
+</body>
+</html>
